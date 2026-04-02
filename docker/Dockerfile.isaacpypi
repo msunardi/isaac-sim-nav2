@@ -60,14 +60,6 @@ RUN python3.11 -m pip install --no-cache-dir \
     "isaacsim-replicator==5.1.0.0" \
     --extra-index-url https://pypi.nvidia.com
 
-# ── Accept Omniverse / Kit EULA non-interactively ────────────────────────────
-# The NGC container handles this via its own entrypoint script which reads the
-# ACCEPT_EULA env var.  In the PyPI container we write the acceptance file
-# directly at build time so Kit never prompts interactively.
-RUN mkdir -p /root/.nvidia-omniverse/config && \
-    printf '[privacy]\nperformance = true\npersonalization = true\nusage = true\ncrasreporter = true\n' \
-    > /root/.nvidia-omniverse/config/privacy.toml
-
 # ── Entrypoint — source ROS2 before running Isaac Sim ────────────────────────
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

@@ -29,6 +29,23 @@ parser.add_argument("--headless", action="store_true",
                     help="Run without GUI (for CI / remote servers)")
 args, _ = parser.parse_known_args()
 
+# ── 0b. Accept Omniverse / Kit EULA non-interactively ────────────────────────
+# Kit 5.x spawns an inner kernel subprocess that reads stdin for EULA consent.
+# In a non-interactive environment (Docker, CI) this produces:
+#   "Unable to bootstrap inner kit kernel: EOF when reading a line"
+# Writing privacy.toml before SimulationApp is imported prevents the prompt.
+_privacy_cfg = os.path.expanduser("~/.nvidia-omniverse/config/privacy.toml")
+if not os.path.exists(_privacy_cfg):
+    os.makedirs(os.path.dirname(_privacy_cfg), exist_ok=True)
+    with open(_privacy_cfg, "w") as _f:
+        _f.write(
+            "[privacy]\n"
+            "performance = true\n"
+            "personalization = true\n"
+            "usage = true\n"
+            "crashreporter = true\n"
+        )
+
 # ── 1. Boot SimulationApp ────────────────────────────────────────────────────
 from isaacsim import SimulationApp  # noqa: E402  (must be first omni import)
 

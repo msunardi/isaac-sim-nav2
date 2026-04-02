@@ -39,17 +39,11 @@ services:
       # Cache Isaac Sim nucleus data between runs (avoids re-downloading assets)
       - isaac-sim-cache:/root/.cache/ov
       - isaac-sim-data:/root/.local/share/ov/data
-    # Run setup_scene.py headless; remove --headless to use the streaming viewer.
-    # The shell preamble writes privacy.toml so Kit does not prompt for EULA
-    # acceptance interactively (ACCEPT_EULA=Y alone is no longer sufficient in
-    # Isaac Sim 5.x — the Kit kernel subprocess reads the file directly).
+    # Run setup_scene.py headless; remove --headless to use the streaming viewer
     command: >
-      bash -c "
-        mkdir -p /root/.nvidia-omniverse/config &&
-        printf '[privacy]\nperformance = true\npersonalization = true\nusage = true\ncrasreporter = true\n'
-          > /root/.nvidia-omniverse/config/privacy.toml &&
-        /isaac-sim/python.sh /workspace/isaac_sim/setup_scene.py --headless
-      "
+      /isaac-sim/python.sh
+        /workspace/isaac_sim/setup_scene.py
+        --headless
 
   # ── ROS2 Humble + Nav2 ─────────────────────────────────────────────────────
   ros2:
@@ -85,11 +79,8 @@ volumes:
 #      docker compose up isaac-sim
 #
 #    Or with headless streaming viewer (open http://localhost:8211):
-#      docker compose run --rm --service-ports isaac-sim bash -c "
-#        mkdir -p /root/.nvidia-omniverse/config &&
-#        printf '[privacy]\nperformance = true\npersonalization = true\nusage = true\ncrasreporter = true\n'
-#          > /root/.nvidia-omniverse/config/privacy.toml &&
-#        /isaac-sim/python.sh /workspace/isaac_sim/setup_scene.py"
+#      docker compose run --rm --service-ports isaac-sim \
+#        /isaac-sim/python.sh /workspace/isaac_sim/setup_scene.py
 #
 # 3. Start Nav2 (Terminal 2):
 #      docker compose run --rm ros2 \
