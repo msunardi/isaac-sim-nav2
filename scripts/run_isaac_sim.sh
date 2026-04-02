@@ -55,6 +55,17 @@ if [[ -z "$PYTHON_CMD" ]]; then
     if python3.11 -c "import isaacsim" 2>/dev/null; then
         PYTHON_CMD="python3.11"
         echo "Install method : NVIDIA PyPI (pip)"
+
+        # Accept the Omniverse / Kit EULA non-interactively.
+        # The NGC container handles this in its own entrypoint; for a PyPI install
+        # Kit will otherwise prompt "Do you accept the EULA?" and hang on EOF.
+        PRIVACY_CFG="$HOME/.nvidia-omniverse/config/privacy.toml"
+        if [[ ! -f "$PRIVACY_CFG" ]]; then
+            mkdir -p "$(dirname "$PRIVACY_CFG")"
+            printf '[privacy]\nperformance = true\npersonalization = true\nusage = true\ncrasreporter = true\n' \
+                > "$PRIVACY_CFG"
+            echo "EULA accepted  : wrote $PRIVACY_CFG"
+        fi
     fi
 fi
 
