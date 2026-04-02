@@ -21,7 +21,7 @@
 services:
   isaac-sim:
     # Replace the NGC pull with a locally built image.
-    image: isaac_sim_nav2_pypi:4.5.0
+    image: isaac_sim_nav2_pypi:5.1.0
     build:
       context: ./docker
       dockerfile: Dockerfile.isaacpypi

@@ -11,7 +11,7 @@ Both Isaac Sim and Nav2 run in Docker containers — no host install of either i
 │  ┌──────────────────────────┐        ┌────────────────────────────┐    │
 │  │  isaac-sim container     │        │  ros2 container            │    │
 │  │  nvcr.io/nvidia/         │        │  (built locally)           │    │
-│  │    isaac-sim:4.5.0       │        │  ROS2 Humble + Nav2        │    │
+│  │    isaac-sim:5.1.0       │        │  ROS2 Humble + Nav2        │    │
 │  │                          │        │                            │    │
 │  │  Physics + LiDAR sim     │ ──────▶│  /scan /odom /tf           │    │
 │  │  OmniGraph ROS2 bridge   │        │  AMCL + planner            │    │
@@ -203,7 +203,7 @@ docker compose -f docker-compose.yml -f docker-compose.pypi.yml run --rm ros2 \
 **Option A — Omniverse Launcher** (sets `ISAAC_SIM_ROOT`, uses `python.sh`):
 
 ```bash
-export ISAAC_SIM_ROOT=~/.local/share/ov/pkg/isaac-sim-4.5.0
+export ISAAC_SIM_ROOT=~/.local/share/ov/pkg/isaac-sim-5.1.0
 bash scripts/run_isaac_sim.sh        # Terminal 1 (host)
 docker compose run --rm ros2 \       # Terminal 2 (container)
   ros2 launch /workspace/launch/nav2_bringup.launch.py
@@ -212,7 +212,7 @@ docker compose run --rm ros2 \       # Terminal 2 (container)
 **Option B — NVIDIA PyPI** (no `ISAAC_SIM_ROOT` needed, uses `python3`):
 
 ```bash
-pip install isaacsim==4.5.0 isaacsim-replicator==4.5.0 isaacsim-ros2-bridge==4.5.0 \
+pip install "isaacsim[all,extscache]==5.1.0" "isaacsim-replicator==5.1.0.0" \
     --extra-index-url https://pypi.nvidia.com
 bash scripts/run_isaac_sim.sh        # Terminal 1 (host, auto-detects pip install)
 docker compose run --rm ros2 \       # Terminal 2 (container)

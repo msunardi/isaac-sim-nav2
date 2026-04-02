@@ -1,6 +1,6 @@
 # Isaac Sim version to pull from NGC.
 # Browse available tags at: https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim
-x-isaac-sim-image: &isaac-sim-image nvcr.io/nvidia/isaac-sim:4.5.0
+x-isaac-sim-image: &isaac-sim-image nvcr.io/nvidia/isaac-sim:5.1.0
 
 # Shared GPU access block reused by both services that need the GPU.
 x-gpu: &gpu

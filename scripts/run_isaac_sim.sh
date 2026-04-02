@@ -8,12 +8,12 @@
 #   1. Omniverse Launcher / NGC container (python.sh wrapper)
 #        Set ISAAC_SIM_ROOT to the install directory, or let the script
 #        search the common default paths.
-#        e.g.  export ISAAC_SIM_ROOT=~/.local/share/ov/pkg/isaac-sim-4.5.0
+#        e.g.  export ISAAC_SIM_ROOT=~/.local/share/ov/pkg/isaac-sim-5.1.0
 #
 #   2. NVIDIA PyPI (pip install isaacsim ...)
 #        No ISAAC_SIM_ROOT needed — the script detects that `isaacsim` is
 #        importable and falls back to plain `python3`.
-#        e.g.  pip install isaacsim==4.5.0 --extra-index-url https://pypi.nvidia.com
+#        e.g.  pip install "isaacsim[all,extscache]==5.1.0" --extra-index-url https://pypi.nvidia.com
 #
 # Usage:
 #   bash scripts/run_isaac_sim.sh [--headless]
@@ -29,6 +29,7 @@ PYTHON_CMD=""
 if [[ -z "${ISAAC_SIM_ROOT:-}" ]]; then
     # Common default paths (adjust for your OS / install method)
     CANDIDATES=(
+        "$HOME/.local/share/ov/pkg/isaac-sim-5.1.0"
         "$HOME/.local/share/ov/pkg/isaac-sim-4.5.0"
         "$HOME/.local/share/ov/pkg/isaac-sim-4.2.0"
         "$HOME/.local/share/ov/pkg/isaac-sim-4.1.0"
@@ -63,10 +64,10 @@ if [[ -z "$PYTHON_CMD" ]]; then
     echo ""
     echo "Option A — Omniverse Launcher / NGC:"
     echo "  Set ISAAC_SIM_ROOT to your Isaac Sim install directory, e.g.:"
-    echo "    export ISAAC_SIM_ROOT=\$HOME/.local/share/ov/pkg/isaac-sim-4.5.0"
+    echo "    export ISAAC_SIM_ROOT=\$HOME/.local/share/ov/pkg/isaac-sim-5.1.0"
     echo ""
     echo "Option B — NVIDIA PyPI:"
-    echo "  pip install isaacsim==4.5.0 --extra-index-url https://pypi.nvidia.com"
+    echo "  pip install 'isaacsim[all,extscache]==5.1.0' --extra-index-url https://pypi.nvidia.com"
     exit 1
 fi
 
