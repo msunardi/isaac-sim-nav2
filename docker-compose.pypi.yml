@@ -1,0 +1,30 @@
+# docker-compose.pypi.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Compose override: swap the isaac-sim service from the NGC image to one built
+# locally from NVIDIA PyPI (pip).  All other services are unchanged.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.pypi.yml <command>
+#
+# Examples:
+#   # Build the PyPI-based Isaac Sim image (one-time, ~8 GB):
+#   docker compose -f docker-compose.yml -f docker-compose.pypi.yml build isaac-sim
+#
+#   # Start Isaac Sim headless:
+#   docker compose -f docker-compose.yml -f docker-compose.pypi.yml up isaac-sim
+#
+#   # Start Nav2:
+#   docker compose -f docker-compose.yml -f docker-compose.pypi.yml run --rm ros2 \
+#     ros2 launch /workspace/launch/nav2_bringup.launch.py
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  isaac-sim:
+    # Replace the NGC pull with a locally built image.
+    image: isaac_sim_nav2_pypi:4.5.0
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.isaacpypi
+    # plain python3 instead of /isaac-sim/python.sh
+    command: >
+      python3 /workspace/isaac_sim/setup_scene.py --headless

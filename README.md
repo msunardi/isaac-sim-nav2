@@ -30,10 +30,10 @@ Both Isaac Sim and Nav2 run in Docker containers — no host install of either i
 | NVIDIA driver | ≥ 525 | Host driver only |
 | [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) | latest | `nvidia-docker2` / `nvidia-ctk` |
 | Docker + Compose | ≥ 24 | |
-| NGC account | free | To pull `nvcr.io/nvidia/isaac-sim` |
+| NGC account | free | **NGC workflow only** — to pull `nvcr.io/nvidia/isaac-sim` |
 | (optional) `xhost` | any | For RViz2 GUI |
 
-### NGC login (one-time)
+### NGC login (NGC workflow only, one-time)
 
 ```bash
 docker login nvcr.io
@@ -70,7 +70,21 @@ isaac_sim_nav2/
 └── package.xml
 ```
 
-## Quick Start (fully containerised)
+## Isaac Sim install options
+
+Two workflows are supported. Pick one — all other steps are identical.
+
+| | **NGC container** | **NVIDIA PyPI (pip)** |
+|---|---|---|
+| Source | `nvcr.io/nvidia/isaac-sim` | `pip install isaacsim` from `pypi.nvidia.com` |
+| NGC account required | Yes | No |
+| Download size | ~20 GB (one-time pull) | ~8 GB (one-time build) |
+| Compose file | `docker-compose.yml` | `docker-compose.yml -f docker-compose.pypi.yml` |
+| Isaac Sim launcher | `/isaac-sim/python.sh` | `python3` |
+
+---
+
+## Quick Start — NGC container (default)
 
 ### Step 1 — Build the ROS2 image and pull Isaac Sim (once)
 
@@ -127,13 +141,80 @@ Use **2D Goal Pose** in RViz2 to click goals directly on the map.
 
 ---
 
+## Quick Start — NVIDIA PyPI (no NGC account)
+
+Uses `docker-compose.pypi.yml` as a Compose override that replaces the NGC
+image with a locally built image that installs Isaac Sim via `pip` from
+NVIDIA's PyPI index (`pypi.nvidia.com`).  No `docker login nvcr.io` required.
+
+### Step 1 — Build both images (once)
+
+```bash
+cd isaac_sim_nav2
+
+# Build the ROS2/Nav2 image (~800 MB)
+docker compose build ros2
+
+# Build the PyPI-based Isaac Sim image (~8 GB — get a coffee)
+docker compose -f docker-compose.yml -f docker-compose.pypi.yml build isaac-sim
+```
+
+### Step 2 — Start Isaac Sim headless (Terminal 1)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.pypi.yml up isaac-sim
+```
+
+### Step 3 — Start Nav2 (Terminal 2)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.pypi.yml run --rm ros2 \
+  ros2 launch /workspace/launch/nav2_bringup.launch.py
+```
+
+### Step 4 — Send a navigation goal (Terminal 3)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.pypi.yml run --rm ros2 \
+  python3 /workspace/scripts/send_goal.py --x 3.0 --y 2.0
+```
+
+### Step 5 — Visualise with RViz2 (optional, needs a display)
+
+```bash
+xhost +local:docker
+docker compose -f docker-compose.yml -f docker-compose.pypi.yml run --rm ros2 \
+  ros2 launch /workspace/launch/full_system.launch.py
+```
+
+> **Tip:** To avoid typing `-f docker-compose.yml -f docker-compose.pypi.yml` every time,
+> set `COMPOSE_FILE` in your shell:
+> ```bash
+> export COMPOSE_FILE=docker-compose.yml:docker-compose.pypi.yml
+> docker compose up isaac-sim   # now uses PyPI image automatically
+> ```
+
+---
+
 ## Host install alternative
 
-If you prefer to run Isaac Sim natively (via Omniverse Launcher):
+`scripts/run_isaac_sim.sh` supports both install methods automatically.
+
+**Option A — Omniverse Launcher** (sets `ISAAC_SIM_ROOT`, uses `python.sh`):
 
 ```bash
 export ISAAC_SIM_ROOT=~/.local/share/ov/pkg/isaac-sim-4.5.0
 bash scripts/run_isaac_sim.sh        # Terminal 1 (host)
+docker compose run --rm ros2 \       # Terminal 2 (container)
+  ros2 launch /workspace/launch/nav2_bringup.launch.py
+```
+
+**Option B — NVIDIA PyPI** (no `ISAAC_SIM_ROOT` needed, uses `python3`):
+
+```bash
+pip install isaacsim==4.5.0 isaacsim-replicator==4.5.0 isaacsim-ros2-bridge==4.5.0 \
+    --extra-index-url https://pypi.nvidia.com
+bash scripts/run_isaac_sim.sh        # Terminal 1 (host, auto-detects pip install)
 docker compose run --rm ros2 \       # Terminal 2 (container)
   ros2 launch /workspace/launch/nav2_bringup.launch.py
 ```
@@ -207,9 +288,11 @@ bash scripts/run_isaac_sim.sh --headless
 
 | Symptom | Fix |
 |---|---|
-| `pull access denied` for isaac-sim | Run `docker login nvcr.io` with your NGC API key |
+| `pull access denied` for isaac-sim | NGC workflow: run `docker login nvcr.io` with your NGC API key |
 | `could not select device driver nvidia` | Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) |
-| `python.sh not found` (host install) | Set `ISAAC_SIM_ROOT` to your Isaac Sim install dir |
+| `python.sh not found` (host install) | Set `ISAAC_SIM_ROOT` to your Omniverse install dir, or switch to the PyPI install |
+| `No matching distribution found for isaacsim` | Add `--extra-index-url https://pypi.nvidia.com` to your pip command |
+| PyPI image build fails with CUDA errors | Ensure the host NVIDIA driver is ≥ 525 and the Container Toolkit is installed |
 | `/scan` not received in Nav2 | Check `ROS_DOMAIN_ID=42` is set in both containers (it is by default) |
 | AMCL not converging | Click **2D Pose Estimate** in RViz2 to give it the starting position |
 | Robot spins in place | Increase `update_min_d` in `amcl` params |

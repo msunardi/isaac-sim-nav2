@@ -1,0 +1,55 @@
+# docker/Dockerfile.isaacpypi
+# ─────────────────────────────────────────────────────────────────────────────
+# Isaac Sim installed from NVIDIA PyPI (pip) instead of the NGC container.
+#
+# Differences from the NGC approach:
+#   - No NGC account or `docker login nvcr.io` required
+#   - Smaller initial download (~8 GB vs ~20 GB), but must rebuild on upgrades
+#   - ROS2 Humble is installed inside this container (needed by the ROS2 bridge)
+#   - Isaac Sim is launched with `python3` instead of `/isaac-sim/python.sh`
+#
+# GPU requirements are unchanged: NVIDIA GPU, driver ≥ 525, NVIDIA Container Toolkit.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ACCEPT_EULA=Y
+ENV PRIVACY_CONSENT=Y
+
+# ── System dependencies ───────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Python 3.10 (required by Isaac Sim 4.x)
+    python3.10 python3.10-dev python3-pip \
+    # OpenGL / EGL — required by the Isaac Sim renderer even in headless mode
+    libgl1 libglib2.0-0 libglvnd0 libglx0 libegl1 libx11-6 \
+    # ROS2 Humble bootstrap tools
+    curl gnupg lsb-release ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── ROS2 Humble (required by omni.isaac.ros2_bridge) ─────────────────────────
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+      -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) \
+      signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+      http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+      > /etc/apt/sources.list.d/ros2.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      ros-humble-ros-base \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Isaac Sim from NVIDIA PyPI ────────────────────────────────────────────────
+# Pin the same version as the former NGC image (4.5.0).
+# To upgrade, change the version pins here and rebuild.
+RUN python3.10 -m pip install --no-cache-dir \
+    isaacsim==4.5.0 \
+    isaacsim-replicator==4.5.0 \
+    isaacsim-ros2-bridge==4.5.0 \
+    --extra-index-url https://pypi.nvidia.com
+
+# ── Entrypoint — source ROS2 before running Isaac Sim ────────────────────────
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+WORKDIR /workspace
+CMD ["python3"]
