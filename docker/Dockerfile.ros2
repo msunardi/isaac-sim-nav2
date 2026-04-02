@@ -1,0 +1,47 @@
+# docker/Dockerfile.ros2
+# ─────────────────────────────────────────────────────────────────────────────
+# ROS2 Humble + Nav2 image for the isaac_sim_nav2 example.
+# Isaac Sim itself runs on the HOST (requires the NVIDIA GPU driver).
+# This container handles ROS2 topics, Nav2, and RViz2.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM ros:humble-ros-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ROS_DOMAIN_ID=42
+
+# ── System dependencies ───────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Nav2 full bringup (planner, controller, AMCL, BT …)
+    ros-humble-nav2-bringup \
+    ros-humble-nav2-msgs \
+    ros-humble-nav2-common \
+    # DWB local planner
+    ros-humble-dwb-plugins \
+    ros-humble-dwb-core \
+    # Robot state publisher
+    ros-humble-robot-state-publisher \
+    ros-humble-joint-state-publisher \
+    # RViz2
+    ros-humble-rviz2 \
+    ros-humble-rviz-common \
+    ros-humble-nav2-rviz-plugins \
+    # Utilities
+    ros-humble-tf2-tools \
+    ros-humble-rqt \
+    ros-humble-rqt-common-plugins \
+    python3-colcon-common-extensions \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Python deps ───────────────────────────────────────────────────────────────
+RUN pip3 install --no-cache-dir transforms3d
+
+# ── Workspace ─────────────────────────────────────────────────────────────────
+WORKDIR /workspace
+# The repo is mounted at runtime (see docker-compose.yml)
+
+# ── Entrypoint ────────────────────────────────────────────────────────────────
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]

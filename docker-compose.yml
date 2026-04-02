@@ -1,0 +1,96 @@
+# Isaac Sim version to pull from NGC.
+# Browse available tags at: https://catalog.ngc.nvidia.com/orgs/nvidia/containers/isaac-sim
+x-isaac-sim-image: &isaac-sim-image nvcr.io/nvidia/isaac-sim:4.5.0
+
+# Shared GPU access block reused by both services that need the GPU.
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu, utility, compute, graphics]
+
+# Shared environment variables for ROS2 / Isaac Sim interop.
+x-ros-env: &ros-env
+  ROS_DOMAIN_ID: "42"
+  FASTRTPS_DEFAULT_PROFILES_FILE: ""   # use DDS defaults
+  RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+
+services:
+
+  # ── Isaac Sim (headless) ────────────────────────────────────────────────────
+  isaac-sim:
+    image: *isaac-sim-image
+    <<: *gpu
+    network_mode: host
+    ipc: host
+    runtime: nvidia              # requires NVIDIA Container Toolkit
+    environment:
+      <<: *ros-env
+      ACCEPT_EULA: "Y"           # required by the NGC image
+      PRIVACY_CONSENT: "Y"
+      # Headless streaming — access via http://localhost:8211 in a browser
+      # Remove or set to "" to use a local display instead
+      OMNI_KIT_ALLOW_ROOT: "1"
+    volumes:
+      - .:/workspace:ro
+      # Cache Isaac Sim nucleus data between runs (avoids re-downloading assets)
+      - isaac-sim-cache:/root/.cache/ov
+      - isaac-sim-data:/root/.local/share/ov/data
+    # Run setup_scene.py headless; remove --headless to use the streaming viewer
+    command: >
+      /isaac-sim/python.sh
+        /workspace/isaac_sim/setup_scene.py
+        --headless
+
+  # ── ROS2 Humble + Nav2 ─────────────────────────────────────────────────────
+  ros2:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.ros2
+    image: isaac_sim_nav2_ros2:humble
+    network_mode: host
+    ipc: host
+    environment:
+      <<: *ros-env
+      DISPLAY: "${DISPLAY:-:0}"
+    volumes:
+      - .:/workspace:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    depends_on:
+      - isaac-sim
+    command: bash
+
+# Persistent volumes for Isaac Sim asset cache
+volumes:
+  isaac-sim-cache:
+  isaac-sim-data:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Fully containerised workflow
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 1. Pull the Isaac Sim image (large — ~20 GB, one-time):
+#      docker compose pull isaac-sim
+#
+# 2. Start Isaac Sim headless (Terminal 1):
+#      docker compose up isaac-sim
+#
+#    Or with headless streaming viewer (open http://localhost:8211):
+#      docker compose run --rm --service-ports isaac-sim \
+#        /isaac-sim/python.sh /workspace/isaac_sim/setup_scene.py
+#
+# 3. Start Nav2 (Terminal 2):
+#      docker compose run --rm ros2 \
+#        ros2 launch /workspace/launch/nav2_bringup.launch.py
+#
+# 4. Send a goal (Terminal 3):
+#      docker compose run --rm ros2 \
+#        python3 /workspace/scripts/send_goal.py --x 3.0 --y 2.0
+#
+# 5. RViz2 (Terminal 4, needs a display):
+#      xhost +local:docker
+#      docker compose run --rm ros2 \
+#        ros2 launch /workspace/launch/full_system.launch.py

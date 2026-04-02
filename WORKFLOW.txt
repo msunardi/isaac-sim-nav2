@@ -1,0 +1,44 @@
+---                                                                                                                         
+  What's in the project                                                                                                     
+                                                                                                                              
+  ┌───────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┐          
+  │             File              │                                   Purpose                                    │            
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ isaac_sim/robot_config.py     │ Central physical parameters (wheel radius, separation, lidar FOV…)           │            
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ isaac_sim/setup_scene.py      │ Isaac Sim script — builds the world, robot, lidar, and OmniGraph ROS2 bridge │            
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ urdf/turtlebot_like.urdf      │ Robot URDF for robot_state_publisher (matches Isaac Sim geometry)            │            
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ config/nav2_params.yaml       │ Full Nav2 config: AMCL, DWB controller, NavFn planner, costmaps, lifecycle   │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ config/rviz2_nav2.rviz        │ Pre-configured RViz2 layout (map, costmaps, laser scan, path, odometry)      │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ maps/simple_map.pgm           │ 200×200 px occupancy grid — 10×10 m arena with walls and 5 obstacles         │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ maps/simple_map.yaml          │ Map metadata (resolution=0.05m, origin=−5,−5)                                │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ launch/nav2_bringup.launch.py │ Starts Nav2 + AMCL + robot_state_publisher                                   │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ launch/full_system.launch.py  │ Same + RViz2                                                                 │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ scripts/run_isaac_sim.sh      │ Detects Isaac Sim install and launches setup_scene.py                        │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ scripts/send_goal.py          │ Sends a NavigateToPose action goal and streams feedback                      │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ docker/Dockerfile.ros2        │ ROS2 Humble + Nav2 + RViz2 image                                             │          
+  ├───────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤            
+  │ docker-compose.yml            │ Mounts repo at /workspace, shares host network with Isaac Sim                │
+  └───────────────────────────────┴──────────────────────────────────────────────────────────────────────────────┘            
+                                                            
+
+Workflow                                                                                                                    
+                                                            
+  Terminal 1 (host):    bash scripts/run_isaac_sim.sh
+  Terminal 2 (docker):  docker compose run --rm ros2 \                                                                        
+                          ros2 launch /workspace/launch/nav2_bringup.launch.py
+  Terminal 3 (docker):  docker compose run --rm ros2 \                                                                        
+                          python3 /workspace/scripts/send_goal.py --x 3.0 --y 2.0
+                                                                                                                              
+  The key integration point is ROS_DOMAIN_ID=42 — both Isaac Sim (on the host) and the Nav2 container use host networking and 
+  this domain ID to exchange topics without any bridging overhead.
