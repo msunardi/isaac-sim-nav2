@@ -30,7 +30,7 @@ parser.add_argument("--headless", action="store_true",
 args, _ = parser.parse_known_args()
 
 # ── 1. Boot SimulationApp ────────────────────────────────────────────────────
-from omni.isaac.kit import SimulationApp  # noqa: E402  (must be first omni import)
+from isaacsim import SimulationApp  # noqa: E402  (must be first omni import)
 
 simulation_app = SimulationApp({
     "renderer": "RayTracedLighting",

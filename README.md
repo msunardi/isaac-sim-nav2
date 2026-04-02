@@ -80,7 +80,7 @@ Two workflows are supported. Pick one — all other steps are identical.
 | NGC account required | Yes | No |
 | Download size | ~20 GB (one-time pull) | ~8 GB (one-time build) |
 | Compose file | `docker-compose.yml` | `docker-compose.yml -f docker-compose.pypi.yml` |
-| Isaac Sim launcher | `/isaac-sim/python.sh` | `python3` |
+| Isaac Sim launcher | `/isaac-sim/python.sh` | `python3.11` |
 
 ---
 
@@ -209,7 +209,7 @@ docker compose run --rm ros2 \       # Terminal 2 (container)
   ros2 launch /workspace/launch/nav2_bringup.launch.py
 ```
 
-**Option B — NVIDIA PyPI** (no `ISAAC_SIM_ROOT` needed, uses `python3`):
+**Option B — NVIDIA PyPI** (no `ISAAC_SIM_ROOT` needed, uses `python3.11`):
 
 ```bash
 pip install "isaacsim[all,extscache]==5.1.0" "isaacsim-replicator==5.1.0.0" \

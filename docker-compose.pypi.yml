@@ -25,6 +25,6 @@ services:
     build:
       context: ./docker
       dockerfile: Dockerfile.isaacpypi
-    # plain python3 instead of /isaac-sim/python.sh
+    # plain python3.11 instead of /isaac-sim/python.sh
     command: >
-      python3 /workspace/isaac_sim/setup_scene.py --headless
+      python3.11 /workspace/isaac_sim/setup_scene.py --headless

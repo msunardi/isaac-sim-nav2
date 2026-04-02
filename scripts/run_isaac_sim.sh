@@ -12,7 +12,7 @@
 #
 #   2. NVIDIA PyPI (pip install isaacsim ...)
 #        No ISAAC_SIM_ROOT needed — the script detects that `isaacsim` is
-#        importable and falls back to plain `python3`.
+#        importable and falls back to plain `python3.11`.
 #        e.g.  pip install "isaacsim[all,extscache]==5.1.0" --extra-index-url https://pypi.nvidia.com
 #
 # Usage:
@@ -50,10 +50,10 @@ if [[ -n "${ISAAC_SIM_ROOT:-}" && -f "${ISAAC_SIM_ROOT}/python.sh" ]]; then
     echo "Isaac Sim root : $ISAAC_SIM_ROOT"
 fi
 
-# ── 2. Fall back to PyPI install (plain python3) ──────────────────────────────
+# ── 2. Fall back to PyPI install (plain python3.11) ──────────────────────────
 if [[ -z "$PYTHON_CMD" ]]; then
-    if python3 -c "import isaacsim" 2>/dev/null; then
-        PYTHON_CMD="python3"
+    if python3.11 -c "import isaacsim" 2>/dev/null; then
+        PYTHON_CMD="python3.11"
         echo "Install method : NVIDIA PyPI (pip)"
     fi
 fi
